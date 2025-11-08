@@ -8,10 +8,18 @@ import { Home, Beaker, History, Zap, ZapOff, Wifi, Play, Save, Loader2, Database
 // --- Firebase Configuration ---
 // These variables are (and must be) defined in the global scope by the host environment.
 const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-const firebaseConfig = (typeof __firebase_config !== 'undefined' && __firebase_config)
-  ? JSON.parse(__firebase_config)
-  : { apiKey: "YOUR_FALLBACK_API_KEY", authDomain: "YOUR_FALLBACK_AUTH_DOMAIN", projectId: "YOUR_FALLBACK_PROJECT_ID" };
-const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : undefined;
+
+// --- NEW Way to get Firebase Config ---
+// We now read from the VITE_APP_FIREBASE_CONFIG environment variable set in Render.
+// Vite exposes env variables via `import.meta.env`
+const firebaseConfigString = import.meta.env.VITE_APP_FIREBASE_CONFIG;
+const firebaseConfig = firebaseConfigString 
+  ? JSON.parse(firebaseConfigString)
+  : { 
+      apiKey: "YOUR_FALLBACK_API_KEY", 
+      authDomain: "YOUR_FALLBACK_AUTH_DOMAIN", 
+      projectId: "YOUR_FALLBACK_PROJECT_ID" 
+    };
 
 // --- Gemini API Configuration ---
 const GEMINI_API_KEY = ""; // Leave blank!
@@ -20,6 +28,10 @@ const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/
 // --- Firebase Initialization ---
 let app, auth, db;
 try {
+  // Check if a valid config was loaded
+  if (!firebaseConfig.apiKey || firebaseConfig.apiKey === "YOUR_FALLBACK_API_KEY") {
+    console.error("Firebase config is missing or using fallback. Make sure VITE_APP_FIREBASE_CONFIG is set in Render.");
+  }
   app = initializeApp(firebaseConfig);
   auth = getAuth(app);
   db = getFirestore(app);
@@ -1481,275 +1493,4 @@ Be helpful and concise. If the user asks for new metrics, provide them.
         {isAnalyzing && (
           <div className="flex items-center">
             <Loader2 className="animate-spin h-5 w-5 text-gray-400" />
-            <p className="ml-2 text-gray-400">AI is thinking...</p>
-          </div>
-        )}
-        <div ref={chatEndRef} /> {/* For auto-scrolling */}
-      </div>
-      
-      {error && <p className="mt-4 text-red-400">{error}</p>}
-      
-      {/* --- NEW: Follow-up Input --- */}
-      {analysisHistory.length > 0 && (
-        <form onSubmit={handleFollowUp} className="mt-4 flex gap-2">
-          <input
-            type="text"
-            value={userFollowUp}
-            onChange={(e) => setUserFollowUp(e.target.value)}
-            placeholder="Send a follow-up message..."
-            className="flex-1 bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-cyan-400"
-            disabled={isAnalyzing}
-          />
-          <Button
-            text="Send"
-            icon={<Send />}
-            type="submit"
-            className="bg-cyan-600 hover:bg-cyan-700"
-            disabled={isAnalyzing || !userFollowUp.trim()}
-          />
-        </form>
-      )}
-    </div>
-  );
-}
-
-
-/**
- * == Calibration Page Component ==
- * Shows formulas and handles calibration.
- */
-function CalibrationPage({ calCoefficients, sendDeviceCommand, isSendingCommand }) {
-  const [flashKey, setFlashKey] = useState(0);
-
-  // This effect creates the "flash" animation
-  useEffect(() => {
-    if (Object.keys(calCoefficients).length > 0) {
-      setFlashKey(k => k + 1); // Increment key to re-trigger animation
-    }
-  }, [calCoefficients]);
-
-  // Helper to format the coefficients
-  const f = (val, precision = 6) => val ? val.toFixed(precision) : '?.??';
-
-  return (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-bold text-white">Calibration</h1>
-      
-      {/* --- Control Panel --- */}
-      <div className="bg-gray-800 p-4 rounded-lg shadow-md">
-        <h3 className="text-lg font-semibold mb-3">Run Calibration</h3>
-        <div className="flex space-x-4">
-          <Button
-            onClick={() => {
-              const r = prompt("Enter KNOWN resistor value (Ω) for Mag Cal:", "10000");
-              if (r) sendDeviceCommand('RUN_MAG_CAL', { knownResistor: parseFloat(r) });
-            }}
-            text="Start Magnitude Cal"
-            icon={<Beaker />}
-            className="bg-yellow-600 hover:bg-yellow-700"
-            disabled={isSendingCommand}
-          />
-          <Button
-            onClick={() => sendDeviceCommand('RUN_PHASE_CAL')}
-            text="Start Phase Cal"
-            icon={<Beaker />}
-            className="bg-yellow-600 hover:bg-yellow-700"
-            disabled={isSendingCommand}
-          />
-        </div>
-      </div>
-
-      {/* --- REVISED: "Cute Animation" Formulas --- */}
-      <div className="bg-gray-800 p-6 rounded-lg shadow-md font-mono text-lg" key={flashKey}>
-        <h3 className="text-xl font-semibold text-cyan-400 mb-6">Current Calibration Coefficients</h3>
-        
-        <div className="space-y-8"> {/* Stacks the sections vertically */}
-          
-          {/* Magnitude (Low-F) Section */}
-          <div>
-            <h4 className="text-base font-semibold text-gray-300 mb-2">Magnitude (Low-F)</h4>
-            <p className="text-white text-md">
-              <span className="text-blue-400">Z</span> *= <ValueAnimator value={f(calCoefficients.MAG1_A)} /> + <ValueAnimator value={f(calCoefficients.MAG1_B, 7)} /> * <span className="text-yellow-400">ln(f)</span>
-            </p>
-            <div className="text-xs text-gray-500 mt-2">
-              <span className="font-semibold text-blue-300">A</span>: <ValueAnimator value={f(calCoefficients.MAG1_A)} brief />
-              <span className="ml-4 font-semibold text-green-300">B</span>: <ValueAnimator value={f(calCoefficients.MAG1_B, 7)} brief />
-            </div>
-          </div>
-
-          {/* Magnitude (High-F) Section */}
-          <div>
-            <h4 className="text-base font-semibold text-gray-300 mb-2">Magnitude (High-F)</h4>
-            <p className="text-white text-md">
-              <span className="text-blue-400">Z</span> *= <ValueAnimator value={f(calCoefficients.MAG2_A)} /> + <ValueAnimator value={f(calCoefficients.MAG2_B, 7)} /> * <span className="text-yellow-400">ln(f)</span>
-            </p>
-            <div className="text-xs text-gray-500 mt-2">
-              <span className="font-semibold text-blue-300">A</span>: <ValueAnimator value={f(calCoefficients.MAG2_A)} brief />
-              <span className="ml-4 font-semibold text-green-300">B</span>: <ValueAnimator value={f(calCoefficients.MAG2_B, 7)} brief />
-            </div>
-          </div>
-          
-          {/* Phase Section */}
-          <div>
-            <h4 className="text-base font-semibold text-gray-300 mb-2">Phase</h4>
-            <p className="text-white text-md flex flex-wrap items-center">
-              <span className="text-red-400 mr-2">φ</span> += <ValueAnimator value={f(calCoefficients.PHASE_A, 3)} /> 
-              <span className="ml-2">+ (<ValueAnimator value={f(calCoefficients.PHASE_B)} /> * <span className="text-orange-400">f</span>)</span>
-              <span className="ml-2">+ (<ValueAnimator value={f(calCoefficients.PHASE_C)} /> * <span className="text-yellow-400">ln(f)</span>)</span>
-              <span className="ml-2">+ (<ValueAnimator value={f(calCoefficients.PHASE_D)} /> / <span className="text-green-400">f</span>)</span>
-            </p>
-            <div className="text-xs text-gray-500 mt-2 flex flex-wrap gap-x-4">
-              <span className="font-semibold text-blue-300">A</span>: <ValueAnimator value={f(calCoefficients.PHASE_A, 3)} brief />
-              <span className="font-semibold text-green-300">B</span>: <ValueAnimator value={f(calCoefficients.PHASE_B)} brief />
-              <span className="font-semibold text-orange-300">C</span>: <ValueAnimator value={f(calCoefficients.PHASE_C)} brief />
-              <span className="font-semibold text-red-300">D</span>: <ValueAnimator value={f(calCoefficients.PHASE_D)} brief />
-            </div>
-          </div>
-
-        </div>
-      </div>
-      <style>{`
-        @keyframes bounceIn {
-          0% { transform: scale(0.9); opacity: 0; }
-          60% { transform: scale(1.1); opacity: 1; }
-          100% { transform: scale(1); }
-        }
-        .animate-bounceIn {
-          animation: bounceIn 0.3s ease-out;
-        }
-      `}</style>
-    </div>
-  );
-}
-
-
-/**
- * == History Page Component ==
- * Shows a list of saved sweeps and their plots.
- */
-function HistoryPage({ db, userId, appId }) {
-  const [history, setHistory] =useState([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedSweep, setSelectedSweep] = useState(null);
-  const chatEndRef = useRef(null); // For scrolling in history chat
-
-  useEffect(() => {
-    if (!db || !userId) return;
-
-    const historyCollectionPath = `artifacts/${appId}/users/${userId}/${HISTORY_COLLECTION}`;
-    const q = query(collection(db, historyCollectionPath), orderBy("createdAt", "desc"));
-    
-    setLoading(true);
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const historyData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setHistory(historyData);
-      setLoading(false);
-    }, (error) => {
-      console.error("Error fetching history:", error);
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, [db, userId, appId]);
-  
-  // Scroll to bottom of chat when sweep changes
-  useEffect(() => {
-    chatEndRef.current?.scrollIntoView();
-  }, [selectedSweep]);
-
-
-  if (loading) {
-    return <div className="flex justify-center mt-10"><Loader2 className="animate-spin h-8 w-8 text-gray-400" /></div>;
-  }
-
-  return (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-bold text-white">Sweep History</h1>
-      {history.length === 0 ? (
-        <p className="text-gray-400">No saved sweeps. Run a sweep and click "Save Last Sweep".</p>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* --- History List --- */}
-          <div className="bg-gray-800 p-4 rounded-lg shadow-md max-h-[70vh] overflow-y-auto">
-            <h3 className="text-lg font-semibold mb-3">Saved Runs</h3>
-            <ul className="space-y-2">
-              {history.map(item => (
-                <li key={item.id}>
-                  <button
-                    onClick={() => setSelectedSweep(item)}
-                    className={`w-full text-left p-3 rounded-lg ${selectedSweep?.id === item.id ? 'bg-cyan-800' : 'bg-gray-700 hover:bg-gray-600'}`}
-                  >
-                    <div className="flex justify-between items-center">
-                      <span className="font-semibold">{item.subject || "Unnamed Subject"}</span>
-                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${item.type === 'tomo' ? 'bg-blue-600' : 'bg-green-600'}`}>
-                        {item.type === 'tomo' ? '2D Tomo' : '1D Sweep'}
-                      </span>
-                    </div>
-                    <span className="text-sm text-gray-400">
-                      {item.createdAt ? new Date(item.createdAt.toDate()).toLocaleString() : "Sweep"}
-                    </span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-          
-          {/* --- Plot Display --- */}
-          <div className="bg-gray-800 p-4 rounded-lg shadow-md max-h-[70vh] overflow-y-auto">
-            {selectedSweep ? (
-              <div className="space-y-6">
-                {selectedSweep.type === 'tomo' ? (
-                  // --- Display 2D Tomo Data ---
-                  <div className="space-y-4">
-                    <h3 className="text-xl font-semibold text-white">
-                      Tomography: {selectedSweep.subject}
-                    </h3>
-                    <p className="text-sm text-gray-400">
-                      Note: This is a simplified static view. Controls for frequency and metric are on the Tomography page.
-                    </p>
-                    <TomographyHeatmap
-                      data={selectedSweep.tomoData.filter(d => d.freq === selectedSweep.tomoData[0].freq)} // Show first freq
-                      metric="mag"
-                    />
-                    <TomographyHeatmap
-                      data={selectedSweep.tomoData.filter(d => d.freq === selectedSweep.tomoData[0].freq)} // Show first freq
-                      metric="phase"
-                    />
-                  </div>
-                ) : (
-                  // --- Display 1D Sweep Data ---
-                  <BodeNyquistPlots
-                    sweepData={selectedSweep.sweepData}
-                    title={`Sweep: ${selectedSweep.subject} (${new Date(selectedSweep.createdAt.toDate()).toLocaleTimeString()})`}
-                  />
-                )}
-                
-                {/* --- Show saved analysis --- */}
-                <div className="border-t border-gray-700 pt-4">
-                  <h3 className="text-lg font-semibold text-white mb-3">Saved Analysis Chat</h3>
-                  {selectedSweep.analysisHistory && selectedSweep.analysisHistory.length > 0 ? (
-                    <div className="space-y-4">
-                      {selectedSweep.analysisHistory.map((msg, index) => (
-                        <ChatBubble key={index} role={msg.role} content={msg.content} />
-                      ))}
-                      <div ref={chatEndRef} />
-                    </div>
-                  ) : (
-                    <p className="text-gray-500 text-center">No AI Analysis was saved for this sweep.</p>
-                  )}
-                </div>
-              </div>
-            ) : (
-              <div className="flex items-center justify-center h-full">
-                <p className="text-gray-400">Select a sweep from the list to view its plots.</p>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
+            <p className="ml-2 text-gray-400

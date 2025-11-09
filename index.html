@@ -3,11 +3,15 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- This loads Tailwind CSS globally, which is necessary for the single file React app -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- We also load Inter font for aesthetics -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap">
     <title>EIS Control Center</title>
+    <!-- The JavaScript entry point is src/main.jsx, which loads App.jsx -->
   </head>
-  <body>
+  <body style="font-family: 'Inter', sans-serif;">
     <div id="root"></div>
-    <!-- The main application script. The /src/main.jsx loads the entire React app. -->
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

@@ -4,23 +4,22 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>EIS Control Center</title>
-  
-  <!-- Final Fix: Load Tailwind CSS directly from CDN -->
+
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  
-  <!-- Add Inter font using Google Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-  
-  <!-- Set custom configuration for Tailwind, including custom font -->
+
+  <!-- Inter font -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+
   <style>
-    :root {
-      font-family: 'Inter', sans-serif;
-    }
+    :root { font-family: 'Inter', sans-serif; }
+    html { scroll-behavior: smooth; }
+    body { min-height: 100vh; background: #0f172a; }
   </style>
 </head>
-<body class="bg-gray-900">
+<body>
   <div id="root"></div>
-  <!-- This script loads your main React application code -->
-  <script type="module" src="/src/main.jsx"></script>
+  <!-- Your bundler-built script should mount <App /> into #root -->
+  <!-- <script type="module" src="/assets/index-XXXXX.js"></script> -->
 </body>
 </html>

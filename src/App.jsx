@@ -605,7 +605,7 @@ export default function App() {
           deviceStatus={deviceStatus}
           liveSweepData={liveSweepData}
           uploadedSweepData={uploadedSweepData}
-          setUploadedSweepData={setUploadedSweepData}
+          setUploadedSweepData={setUploadedUploadedData}
           isPapaParseLoaded={isPapaParseLoaded}
           sendDeviceCommand={sendDeviceCommand}
           isSendingCommand={isSendingCommand}

@@ -637,7 +637,7 @@ export default function App() {
       </nav>
 
       {/* --- Main Content Area --- */}
-      <main className="flex-1 p-8 overflow-y-auto">
+      <main className="flex-1 p-8 overflow-y-auto w-full"> {/* ADDED w-full here */}
         {isLoading ? (
           <div className="flex items-center justify-center h-full">
             <Loader2 className="animate-spin h-8 w-8 text-gray-400" />

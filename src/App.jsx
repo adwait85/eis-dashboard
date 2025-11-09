@@ -618,7 +618,7 @@ export default function App() {
   };
 
   return (
-    <div className="flex h-screen bg-gray-900 text-gray-100 font-sans">
+    <div className="flex h-screen w-full bg-gray-900 text-gray-100 font-sans"> {/* ADDED w-full here */}
       {/* --- Sidebar --- */}
       <nav className="w-64 bg-gray-950 p-5 flex flex-col justify-between shadow-lg">
         <div>
@@ -637,7 +637,7 @@ export default function App() {
       </nav>
 
       {/* --- Main Content Area --- */}
-      <main className="flex-1 p-8 overflow-y-auto w-full"> {/* ADDED w-full here */}
+      <main className="flex-1 p-8 overflow-y-auto"> {/* REMOVED w-full, left flex-1 */}
         {isLoading ? (
           <div className="flex items-center justify-center h-full">
             <Loader2 className="animate-spin h-8 w-8 text-gray-400" />
@@ -1605,7 +1605,7 @@ function CalibrationPage({ calCoefficients, sendDeviceCommand, isSendingCommand 
             </div>
           </div>
 
-          {/* Magnitude (High-F) Section */}
+          /* Magnitude (High-F) Section */
           <div>
             <h4 className="text-base font-semibold text-gray-300 mb-2">Magnitude (High-F)</h4>
             <p className="text-white text-md">

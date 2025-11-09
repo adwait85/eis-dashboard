@@ -23,7 +23,8 @@ const firebaseConfig = {
 };
 // ******************************************************************
 
-const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : undefined;
+// Removed initialAuthToken reference as it causes custom-token-mismatch
+const initialAuthToken = undefined; 
 
 // --- Gemini API Configuration ---
 const GEMINI_API_KEY = ""; // Leave blank!
@@ -439,7 +440,9 @@ export default function App() {
         setUserId(user.uid);
       } else if (initialAuthToken) {
         try {
-          await signInWithCustomToken(auth, initialAuthToken);
+          // REMOVED: await signInWithCustomToken(auth, initialAuthToken); 
+          // This causes the persistent custom-token-mismatch error.
+          await signInAnonymously(auth); // Use Anonymous login instead
         } catch (e) {
           console.error("Custom token sign-in error:", e);
           await signInAnonymously(auth); // Fallback

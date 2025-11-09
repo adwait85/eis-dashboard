@@ -1,17 +1,26 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- This loads Tailwind CSS globally, which is necessary for the single file React app -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- We also load Inter font for aesthetics -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap">
-    <title>EIS Control Center</title>
-    <!-- The JavaScript entry point is src/main.jsx, which loads App.jsx -->
-  </head>
-  <body style="font-family: 'Inter', sans-serif;">
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EIS Control Center</title>
+  
+  <!-- Final Fix: Load Tailwind CSS directly from CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Add Inter font using Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Set custom configuration for Tailwind, including custom font -->
+  <style>
+    :root {
+      font-family: 'Inter', sans-serif;
+    }
+  </style>
+</head>
+<body class="bg-gray-900">
+  <div id="root"></div>
+  <!-- This script loads your main React application code -->
+  <script type="module" src="/src/main.jsx"></script>
+</body>
 </html>

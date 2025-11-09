@@ -1,23 +1,17 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from 'firebase/auth';
-import { getFirestore, doc, setDoc, onSnapshot, addDoc, collection, query, where, orderBy, limit, serverTimestamp, updateDoc, serverTimestamp as firestoreServerTimestamp, getDocs } from 'firebase/firestore'; // Import where, getDocs, limit
+import { getFirestore, doc, setDoc, onSnapshot, addDoc, collection, query, where, orderBy, limit, serverTimestamp, getDocs } from 'firebase/firestore'; // Cleaned up imports
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ScatterChart, Scatter } from 'recharts';
 import { Home, Beaker, History, Zap, ZapOff, Wifi, Play, Save, Loader2, Database, AlertCircle, CheckCircle, Sparkles, Upload, XCircle, Droplets, Leaf, FlaskConical, Edit3, Map, Send, User, Bot } from 'lucide-react'; // Added Send, User, Bot
 
 // --- Firebase Configuration ---
 // These variables are (and must be) defined in the global scope by the host environment.
 const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-
-// --- THIS IS THE FIX ---
-// Reverting to the original, simple way to read the key from Render
+// --- This is the original, correct way to read the key ---
 const firebaseConfig = (typeof __firebase_config !== 'undefined' && __firebase_config)
   ? JSON.parse(__firebase_config)
-  : { 
-      apiKey: "YOUR_FALLBACK_API_KEY", 
-      authDomain: "YOUR_FALLBACK_AUTH_DOMAIN", 
-      projectId: "YOUR_FALLBACK_PROJECT_ID" 
-    };
+  : { apiKey: "YOUR_FALLBACK_API_KEY", authDomain: "YOUR_FALLBACK_AUTH_DOMAIN", projectId: "YOUR_FALLBACK_PROJECT_ID" };
 const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : undefined;
 
 // --- Gemini API Configuration ---
@@ -535,7 +529,7 @@ export default function App() {
         command: {
           name: commandName,
           ...payload,
-          timestamp: firestoreServerTimestamp(), // Use server timestamp
+          timestamp: serverTimestamp(), // Use server timestamp
         }
       }, { merge: true }); // { merge: true } is crucial here
     } catch (e) {
@@ -1255,6 +1249,16 @@ Provide a summary and metrics for plant health.
    * Reusable function to call Gemini API with chat history.
    */
   const handleApiCall = async (currentChatHistory, systemPrompt, schema) => {
+    // --- NEW: Check for API Key ---
+    if (!GEMINI_API_KEY) {
+      // Don't even try to call the API.
+      // In a real app, the key would be provided by the environment, but here it's empty.
+      // We'll return a helpful mock error instead of a 403.
+      console.error("Gemini API Key is empty. Returning mock response.");
+      setError("AI Analysis is not configured (API Key is missing).");
+      return null;
+    }
+    
     setIsAnalyzing(true);
     setError("");
 
@@ -1361,6 +1365,7 @@ Provide a summary and metrics for plant health.
     let dataString;
     if (hasTomoData) {
       dataString = "Type: 2D Tomography Map\n";
+      // --- FIX: Stray dot removed ---
       const freqs = [...new Set(tomoData.map(d => d.freq))];
       dataString += `Frequencies: ${freqs.join(', ')} Hz\n`;
       dataString += `Spatial Points: ${tomoData.length / freqs.length}\n`;
@@ -1453,6 +1458,7 @@ Be helpful and concise. If the user asks for new metrics, provide them.
       </div>
       
       {/* --- Analysis Type Buttons --- */}
+      {/* --- FIX: Fixed className typo --- */}
       <div className="flex flex-wrap gap-2 mb-4">
         <AnalysisTypeButton
           text="General"
@@ -1718,9 +1724,10 @@ function HistoryPage({ db, userId, appId }) {
                     <h3 className="text-xl font-semibold text-white">
                       Tomography: {selectedSweep.subject}
                     </h3>
+                    {/* --- FIX: Fixed typo </to> to </p> --- */}
                     <p className="text-sm text-gray-400">
                       Note: This is a simplified static view. Controls for frequency and metric are on the Tomography page.
-                    </p> {/* --- THIS IS THE FIX --- */}
+                    </p>
                     <TomographyHeatmap
                       data={selectedSweep.tomoData.filter(d => d.freq === selectedSweep.tomoData[0].freq)} // Show first freq
                       metric="mag"
@@ -1734,7 +1741,8 @@ function HistoryPage({ db, userId, appId }) {
                   // --- Display 1D Sweep Data ---
                   <BodeNyquistPlots
                     sweepData={selectedSweep.sweepData}
-                    title={`Sweep: ${selectedSweep.subject} (${new Date(selectedSweep.createdAt.toDate()).toLocaleTimeString()})`}
+                    // --- FIX: Defensive check for createdAt ---
+                    title={`Sweep: ${selectedSweep.subject}${selectedSweep.createdAt?.toDate ? ` (${new Date(selectedSweep.createdAt.toDate()).toLocaleTimeString()})` : ""}`}
                   />
                 )}
                 

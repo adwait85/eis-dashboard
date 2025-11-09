@@ -8,10 +8,21 @@ import { Home, Beaker, History, Zap, ZapOff, Wifi, Play, Save, Loader2, Database
 // --- Firebase Configuration ---
 // These variables are (and must be) defined in the global scope by the host environment.
 const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-// --- This is the original, correct way to read the key ---
-const firebaseConfig = (typeof __firebase_config !== 'undefined' && __firebase_config)
-  ? JSON.parse(__firebase_config)
-  : { apiKey: "YOUR_FALLBACK_API_KEY", authDomain: "YOUR_FALLBACK_AUTH_DOMAIN", projectId: "YOUR_FALLBACK_PROJECT_ID" };
+
+// ******************************************************************
+// *** FINAL FIX: HARDCODED KEY TO BYPASS RENDER ENV VARIABLE ISSUES ***
+// ******************************************************************
+const firebaseConfig = {
+  apiKey: "AIzaSyAKsju4i7rTicmHE4PXGmCr0wKPqzaCH4A", // YOUR API KEY
+  authDomain: "eis-dashboard-72f97.firebaseapp.com",
+  projectId: "eis-dashboard-72f97",
+  storageBucket: "eis-dashboard-72f97.firebasestorage.app",
+  messagingSenderId: "357594303691",
+  appId: "1:357594303691:web:d7e40beb40aa64b5891f4e",
+  measurementId: "G-FHC7K8XE36"
+};
+// ******************************************************************
+
 const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : undefined;
 
 // --- Gemini API Configuration ---
@@ -21,10 +32,7 @@ const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/
 // --- Firebase Initialization ---
 let app, auth, db;
 try {
-  // Check if a valid config was loaded
-  if (!firebaseConfig.apiKey || firebaseConfig.apiKey === "YOUR_FALLBACK_API_KEY") {
-    console.error("Firebase config is missing or using fallback. Make sure __firebase_config is set in Render.");
-  }
+  // We no longer check the fallback, as the config is hardcoded.
   app = initializeApp(firebaseConfig);
   auth = getAuth(app);
   db = getFirestore(app);
@@ -442,7 +450,7 @@ export default function App() {
       setIsAuthReady(true);
     });
     return () => unsubscribe();
-  }, []);
+  }, [auth, initialAuthToken]); // Added dependencies to comply with React Hooks rules
 
   // --- Firebase Data Listeners ---
   useEffect(() => {
